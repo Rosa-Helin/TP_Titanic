@@ -1,0 +1,138 @@
+---
+title: "RMarkdown Analyse"
+output: html_document
+date: "2024-11-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# TP : Analyse reproductible du dataset Titanic avec RMarkdown, Git et package R
+
+*Question 1: Initialisation du Projet sur GitHub et Clonage Local (fait)*
+
+*Question 2 : Création d’un Rapport d’Analyse dans un Document RMarkdown :*
+
+```{r}
+# Créez un fichier RMarkdown Analyse.Rmd dans le dossier cloné précédemment
+# Chargement des données Titanic Survival :
+library(carData)
+data("TitanicSurvival")
+```
+```{r}
+# Installation des packages nécessaires :
+library(MASS)
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+# Présenter les données :
+df <- TitanicSurvival
+head(df)
+```
+```{r}
+# Structure des données :
+str(df)
+```
+
+```{r}
+# Présenter les statistiques descriptives :
+summary(df)
+```
+```{r}
+# Calculer les statistiques descriptives pour les variables numériques
+summary_stats <- df %>%
+  summarise(
+    Age_mean = mean(age, na.rm = TRUE),
+    Age_sd = sd(age, na.rm = TRUE),
+    Age_min = min(age, na.rm = TRUE),
+    Age_max = max(age, na.rm = TRUE),
+    Survived_rate = mean(survived, na.rm = TRUE)
+  )
+summary_stats
+```
+
+```{r}
+# Statistiques descriptives par sexe et classe
+grouped_stats <- df %>%
+  group_by(sex, passengerClass) %>%
+  summarise(
+    Age_mean = mean(age, na.rm = TRUE),
+    Survived_rate = mean(survived, na.rm = TRUE),
+    Count = n()
+  )
+grouped_stats
+```
+```{r}
+# Visualisation de la répartition des survivants en fonction du sexe :
+plot(df$survived~df$sex, 
+     col=c("#77dd77", "#ff6961"),
+     xlab= "Sex",
+     ylab= "Survived",
+     main = "The distribution of survivors according to sex")
+```
+```{r}
+# Visualisation de la répartition des survivants en fonction de la classe :
+plot(df$survived~df$passengerClass,
+     col=c("#77dd77", "#ff6961"),
+     xlab= "Passenger Class",
+     ylab= "Survived",
+     main= "The distribution of survivors according to passenger class")
+```
+
+```{r}
+# Représentation de l'âge en fonction de la variable "survived" :
+plot(df$age~df$survived,
+     col=c("#ff6961","#77dd77"),
+     xlab= "Survived",
+     ylab= "Age",
+     main= "The distribution of ages according to survivors")
+
+```
+
+*Explication de la variable "survived" en fonction des autres variables :*
+
+La variable "survived" est une variable binaire (0 = "No", 1 = "Yes"), qui indique si un passager a survécu ou non au naufrage du Titanic.
+Pour les autres variables: 
+- la variable "sex" représente le sexe du passager (homme ou femme), c'est une variable catégorielle;
+- la variable "passengerClass" représente la classe du billet (1ère, 2ème, ou 3ème), c'est une variable catégorielle;
+- la variable "age" représente l'âge du passager, c'est une variable numérique.
+
+*Interprétation des résultats obtenus :*
+
+- Pour le graphique représentant la répartition des survivants en fonction du sexe, les femmes ont généralement eu un taux de survie plus élevé par rapport aux hommes tandis que les hommes montrent un taux de mortalité plus élevé. Le sexe du passager a joué un rôle important dans les chances de survie. La fameuse règle "les femmes et les enfants d'abord" a été prise en compte.
+
+- Pour le graphique représentant la répartition des survivants en fonction de la classe, les passagers de la 1ère classe ont le taux de survie le plus élevé, les passagers de la 3ème classe ont le taux de mortalité le plus élevé, les passagers de la 2ème classe montrent des taux intermédiaires. 
+On peut donc constater qu'il y a une disparité sociale importante, les passagers de la 1ère classe avaient un meilleur accès aux canots de sauvetage et à l'équipe tandis que les passagers de la 3ème classe étaient souvent situés dans les parties inférieures du navire, ce qui a limité leur accès au pont supérieur.
+
+- Pour le graphique représentant l'age en fonction de la survie, les passagers qui ont survécu incluent une proportion plus élevée d'enfants et de jeunes adultes tandis que les passagers décédés sont répartis plus uniformément dans les tranches d'âges, mais les personnes âgées semblent avoir eu des chances de survie plus faibles. Les enfants ont été sauvé en priorité tandis que les personnes âgées ont probablement été moins capables de se déplacer rapidement pour accéder aux canots de sauvetage.
+
+```{r}
+y <- as.numeric(df$survived)-1
+summary(glm(y~age+sex+passengerClass, data=df,family = binomial(link = "logit")))
+```
+
+*Question 3 : Création d'un package R avec des fonctions d'analyse*
+
+*Utilisation des fonctions de mon package*
+```{r}
+library(devtools)
+library(dplyr)
+library(TitanicPackage)
+library(carData)
+data("TitanicSurvival")
+```
+```{r}
+# Calcul du taux de survie par classe :
+source("analyse_titanic.R")
+taux_survie_classe <- calculate_survival_rate_by_class(TitanicSurvival)
+print(taux_survie_classe)
+```
+```{r}
+# Calcul du taux de survie par sexe ;
+taux_survie_sex <- calculate_survival_rate_by_sex(TitanicSurvival)
+print(taux_survie_sex)
+```
+
+
